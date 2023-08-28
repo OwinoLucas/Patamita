@@ -1,0 +1,150 @@
+import React, { Component } from 'react';
+import { Form, Button, Row, Col } from 'react-bootstrap'; // Import necessary Bootstrap components
+
+class BottomBet extends Component {
+    constructor(props) {
+        super(props);
+        this._isMounted = false;
+        this.state = {
+            buttonText: "PLACE BET",
+            buttonType: "btn-secondary",
+            inputDisabled: false,
+            buttonProgress: false,
+            bits: "10",
+            profit: 10,
+            chance: 0,
+            cashout: "2.00",
+            bitError: false,
+            outError: false,
+            isToggleOn: false,
+            hotkey: X("hotkey") ? X("hotkey") : "OFF"
+        };
+        window.addEventListener("keypress", this.handleHotKey.bind(this));
+        this.handleInputChange = this.handleInputChange.bind(this);
+        this.handleBet = this.handleBet.bind(this);
+        this.setBet = this.setBet.bind(this);
+    }
+
+    componentDidMount() {
+        this._isMounted = true;
+        fe.on("finish", t => this.handleFinish(Ve.decrypt(t)));
+        fe.on("play", t => this.handlePlay(Ve.decrypt(t)));
+        fe.on("game_status", t => this.checkStatus(Ve.decrypt(t)));
+        fe.on("waiting", t => this.checkWaitingGame());
+        fe.on("busted", t => this.checkBustedGame());
+        fe.on("started", t => this.checkStartedGame());
+    }
+
+    componentWillUnmount() {
+        this._isMounted = false;
+        window.removeEventListener("keypress", this.handleHotKey.bind(this));
+    }
+
+    handleHotKey(e) {
+        if (
+            Fe.denied_hotkey &&
+            ((Fe.denied_hotkey = false), Z("hotkey", "OFF"), this.setState({ hotkey: "OFF" })),
+            "ON" === X("hotkey")
+        ) {
+            var t = e.which || e.keyCode;
+            if (32 === t) this.handleBet(e);
+            else if (114 === t) this.setState(prevState => ({ bits: prevState.bits === 0 ? 1 : parseInt(2 * prevState.bits) }));
+            else if (102 === t) this.setState(prevState => ({ cashout: parseFloat(2 * prevState.cashout).toFixed(2) }));
+            else if (101 === t) this.setState(prevState => ({ bits: parseInt(prevState.bits / 2) }));
+            else if (100 === t) this.setState(prevState => ({ cashout: parseFloat(prevState.cashout / 2).toFixed(2) }));
+            this.handleInputChange(e);
+        }
+    }
+
+    handleInputChange(e) {
+        // Handle input changes
+        const target = e.target;
+        const value = target.type === "checkbox" ? target.checked : target.value;
+        const name = target.name;
+
+        if (Ke.a.isEmpty(value)) {
+            if (name === g) this.setState({ bitError: "red-border" });
+            else if (name === "cashout") this.setState({ outError: "red-border" });
+        } else {
+            if (name === g) this.setState({ bitError: false });
+            else if (name === "cashout") this.setState({ outError: false });
+        }
+
+        if (!(name === "bits" && value >= 1001) && !(name === "cashout" && value >= 1001)) {
+            this.setState({ [name]: value });
+            const parsedBits = Number.parseFloat(this.state.bits);
+            const parsedCashout = Number.parseFloat(this.state.cashout);
+            const calculatedProfit = Math.round(parsedBits * (parsedCashout - 1));
+            this.setState({ profit: le()(calculatedProfit).format("0,0[.]00") });
+        }
+    }
+
+    // ... other methods ...
+
+    render() {
+        const hotkeyLabelClass = this.state.hotkey === "OFF" ? "label-grey" : "label-success";
+        const a = this.props.mobile ? "mb-0" : "mb-4";
+        const n = this.props.mobile ? "py-4" : "py-3";
+
+        return (
+            <div onKeyPress={this.handleHotKey}>
+                <div className="row BET">
+                    <form
+                        className="w-90 mx-auto my-4"
+                        onSubmit={this.handleBet}
+                    >
+                        <Form.Group as={Row}>
+                            <Col md={6}>
+                                <div className="input-group col-6">
+                                    <div className="input-group-btn">
+                                        <button className="btn btn-default btn-number" type="button" disabled="disabled" datatype="minus" datafield="bits">
+                                            <span className="mdi mdi-minus"></span>
+                                        </button>
+                                    </div>
+                                    <Form.Control
+                                        className="form-control input-number"
+                                        type="number"
+                                        id="bits"
+                                        min="10"
+                                        step="5"
+                                        name="bits"
+                                        max="1000"
+                                        placeholder="Enter Bet"
+                                        value={this.state.bits}
+                                        autoComplete="off"
+                                        onKeyUp={this.handleInputChange}
+                                        onChange={this.handleInputChange}
+                                    />
+                                    <div className="input-group-btn">
+                                        <button className="btn btn-default btn-number" type="button" datatype="plus" datafield="bits">
+                                            <span className="mdi mdi-plus"></span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </Col>
+                            {!this.props.mobile && (
+                                <Col md={6}>
+                                    <div className={`form-group rev ${a}`}>
+                                        <Button
+                                            variant={`btn waves-light btn-md btn-block btn-b ${n} btn-bet ${this.state.buttonType}`}
+                                            disabled={this.state.inputDisabled}
+                                            onClick={this.handleBet}
+                                            type="submit"
+                                        >
+                                            {this.state.buttonText}
+                                        </Button>
+                                    </div>
+                                    <div className={`col-6 font-12 pt-2 text-grey tprof text-left`}>
+                                        Profit: <span>{g} {this.state.profit}</span>
+                                    </div>
+                                </Col>
+                            )}
+                        </Form.Group>
+                    </form>
+                </div>
+            </div>
+        );
+    }
+}
+
+export default BottomBet;
